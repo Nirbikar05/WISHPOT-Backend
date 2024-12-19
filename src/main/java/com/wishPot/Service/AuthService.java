@@ -1,9 +1,8 @@
 package com.wishPot.Service;
 
-import com.wishPot.Dto.AuthenticationResponse;
-import com.wishPot.Dto.LoginRequest;
-import com.wishPot.Dto.RegistrationRequest;
-import com.wishPot.Dto.RoleResponse;
+import com.wishPot.Dto.*;
+import com.wishPot.Exception.UserAlreadyExistsException;
+import com.wishPot.Exception.UserNotFoundException;
 import com.wishPot.model.User;
 import com.wishPot.Repository.UserRepository;
 import com.wishPot.Util.JwtUtil;
@@ -25,10 +24,23 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    // Check if email exists
+    public boolean isEmailExists(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
+
+    // Check if username exists
+    public boolean isUsernameExists(String username) {
+        return userRepository.findByUsername(username).isPresent();
+    }
+
     // Register User
     public void registerUser(RegistrationRequest request) {
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username is already taken!");
+        if (isUsernameExists(request.getUsername())) {
+            throw new UserAlreadyExistsException("Username is already taken!");
+        }
+        if (isEmailExists(request.getEmail())) {
+            throw new UserAlreadyExistsException("Email is already registered!");
         }
 
         User user = new User();
@@ -45,7 +57,7 @@ public class AuthService {
         Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
 
         if (userOptional.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOptional.get().getPassword())) {
-            throw new RuntimeException("Invalid username or password!");
+            throw new UserNotFoundException("Invalid username or password!");
         }
 
         User user = userOptional.get();
@@ -59,7 +71,7 @@ public class AuthService {
     public RoleResponse getUserRole(String username) {
         Optional<User> userOptional = userRepository.findByUsername(username);
         if (userOptional.isEmpty()) {
-            throw new RuntimeException("User not found!");
+            throw new UserNotFoundException("User not found!");
         }
 
         RoleResponse response = new RoleResponse();

@@ -16,5 +16,5 @@ public class User {
     private String username;
     private String password;
     private String email;
-    private String role; // e.g., "USER" or "ADMIN"
+    private String role = "USER"; // e.g., "USER" or "ADMIN"
 }
